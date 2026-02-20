@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,23 +16,26 @@ body{
   color:white;
 }
 
-/* Cake */
+/* 🎂 Cake */
 .cake-container{
   position:absolute;
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
   z-index:10;
+  filter: drop-shadow(0 0 20px #2ecc71);
 }
 
-.cake{
-  width:200px;
-  height:120px;
-  background:#2ecc71;
+.layer{
+  margin:auto;
+  background:#27ae60;
   border-radius:10px;
   position:relative;
-  box-shadow:0 0 20px #2ecc71;
 }
+
+.layer1{ width:220px; height:60px; }
+.layer2{ width:170px; height:60px; margin-top:-10px;}
+.layer3{ width:120px; height:60px; margin-top:-10px;}
 
 .candle{
   width:10px;
@@ -39,7 +43,8 @@ body{
   background:white;
   position:absolute;
   top:-40px;
-  left:95px;
+  left:50%;
+  transform:translateX(-50%);
 }
 
 .flame{
@@ -58,21 +63,14 @@ body{
   to{transform:scale(1.2);}
 }
 
-.message{
+/* 🤍 Lily Flowers */
+.lily{
   position:absolute;
-  bottom:15%;
-  width:100%;
-  font-size:28px;
-  opacity:0;
-  transition:1s;
-}
-
-/* Petals */
-.petal{
-  position:absolute;
-  top:-10px;
-  font-size:20px;
+  top:-60px;
+  width:40px;
+  height:40px;
   animation:fall linear infinite;
+  pointer-events:none;
 }
 
 @keyframes fall{
@@ -80,50 +78,85 @@ body{
     transform:translateY(110vh) rotate(360deg);
   }
 }
+
+.message{
+  position:absolute;
+  bottom:15%;
+  width:100%;
+  font-size:28px;
+  opacity:0;
+  transition:1.5s;
+}
 </style>
 </head>
 
 <body>
 
+<audio id="bgMusic" autoplay loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=japanese-lofi-ambient-110624.mp3" type="audio/mp3">
+</audio>
+
 <div class="cake-container">
-  <div class="cake"></div>
+  <div class="layer layer3"></div>
+  <div class="layer layer2"></div>
+  <div class="layer layer1"></div>
   <div class="candle">
     <div class="flame" id="flame"></div>
   </div>
 </div>
 
 <div class="message" id="message">
-  🌸 Happy Birthday Samar 💚 <br>
-  Stay as beautiful as your soul ✨
+  🤍 Happy Birthday Samar 💚 <br>
+  Pure as a lily, beautiful as your heart ✨
 </div>
 
 <script>
-// 🌸 Create Falling Petals
-function createPetal(){
-  const petal = document.createElement("div");
-  petal.classList.add("petal");
-  petal.innerHTML = "🌸";
-  petal.style.left = Math.random()*100 + "vw";
-  petal.style.animationDuration = (5+Math.random()*5) + "s";
-  document.body.appendChild(petal);
-  setTimeout(()=>{petal.remove();},10000);
-}
-setInterval(createPetal,300);
 
-// ✋ Interactive touch move
-document.addEventListener("touchmove", function(e){
-  let touch = e.touches[0];
-  let spark = document.createElement("div");
-  spark.innerHTML="✨";
-  spark.style.position="absolute";
-  spark.style.left=touch.clientX+"px";
-  spark.style.top=touch.clientY+"px";
-  spark.style.fontSize="20px";
-  document.body.appendChild(spark);
-  setTimeout(()=>spark.remove(),500);
+// 🤍 Create Lily SVG
+function createLily(){
+  const lily = document.createElement("div");
+  lily.classList.add("lily");
+  lily.style.left = Math.random()*100 + "vw";
+  lily.style.animationDuration = (6+Math.random()*4) + "s";
+
+  lily.innerHTML = `
+  <svg viewBox="0 0 100 100">
+    <polygon points="50,5 65,40 95,50 65,60 50,95 35,60 5,50 35,40"
+    fill="white" opacity="0.9"/>
+    <circle cx="50" cy="50" r="8" fill="#f1c40f"/>
+  </svg>`;
+
+  document.body.appendChild(lily);
+  setTimeout(()=>{lily.remove();},10000);
+}
+
+setInterval(createLily,400);
+
+// ✨ Touch interaction (flowers move away)
+document.addEventListener("mousemove", moveFlowers);
+document.addEventListener("touchmove", moveFlowers);
+
+function moveFlowers(e){
+  let x = e.clientX || (e.touches && e.touches[0].clientX);
+  let y = e.clientY || (e.touches && e.touches[0].clientY);
+
+  document.querySelectorAll(".lily").forEach(lily=>{
+    let rect = lily.getBoundingClientRect();
+    let dx = rect.left - x;
+    let dy = rect.top - y;
+    let distance = Math.sqrt(dx*dx + dy*dy);
+    if(distance < 100){
+      lily.style.transform = `translate(${dx/5}px, ${dy/5}px)`;
+    }
+  });
+}
+
+// 🎶 Activate music if blocked
+document.addEventListener("click", ()=>{
+  document.getElementById("bgMusic").play();
 });
 
-// 🎤 Microphone blow detection
+// 🎤 Blow detection
 navigator.mediaDevices.getUserMedia({ audio: true })
 .then(stream=>{
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -136,7 +169,7 @@ navigator.mediaDevices.getUserMedia({ audio: true })
     analyser.getByteFrequencyData(data);
     let volume = data.reduce((a,b)=>a+b)/data.length;
 
-    if(volume > 60){ // Blow threshold
+    if(volume > 60){
       document.getElementById("flame").style.display="none";
       document.getElementById("message").style.opacity=1;
     }
@@ -144,9 +177,9 @@ navigator.mediaDevices.getUserMedia({ audio: true })
   }
   detectBlow();
 })
-.catch(()=>alert("Please allow microphone access to blow the candle 🎤"));
+.catch(()=>alert("Please allow microphone access 🎤"));
 
 </script>
 
 </body>
-</html># ss
+</html>
